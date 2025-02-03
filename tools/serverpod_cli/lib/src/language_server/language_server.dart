@@ -48,8 +48,8 @@ Future<void> runLanguageServer() async {
   });
 
   connection.onInitialized((_) async {
-    if (serverProject == null &&
-        exception is ServerpodModulesNotFoundException) {
+    sendNotification(connection, 'onInitialized');
+    if (serverProject == null && exception is ServerpodModulesNotFoundException) {
       _sendModulesNotFoundNotification(connection);
     } else if (serverProject == null) {
       return;
@@ -77,6 +77,7 @@ Future<void> runLanguageServer() async {
   });
 
   connection.onDidOpenTextDocument((params) async {
+    sendNotification(connection, 'onDidOpenTextDocument');
     var project = serverProject;
     if (project == null) return;
     if (project.analyzer.isModelRegistered(params.textDocument.uri)) {
@@ -86,6 +87,7 @@ Future<void> runLanguageServer() async {
       return;
     }
 
+    sendNotification(connection, 'AddYamlModel');
     project.analyzer.addYamlModel(
       ModelSource(
         defaultModuleAlias,
@@ -119,15 +121,29 @@ Future<void> runLanguageServer() async {
     );
   });
 
+  connection.onRenameRequest((params) async {
+    sendNotification(connection, 'onRenameRequest');
+    return WorkspaceEdit();
+  });
+
   await connection.listen();
+}
+
+void sendNotification(Connection connection, String message) {
+  connection.sendNotification(
+    'window/showMessage',
+    ShowMessageParams(
+      message: message,
+      type: MessageType.Log,
+    ).toJson(),
+  );
 }
 
 void _sendModulesNotFoundNotification(Connection connection) {
   connection.sendNotification(
     'window/showMessage',
     ShowMessageParams(
-      message:
-          'Serverpod model validation disabled. Unable to locate necessary modules, have you run "dart pub get"?',
+      message: 'Serverpod model validation disabled. Unable to locate necessary modules, have you run "dart pub get"?',
       type: MessageType.Warning,
     ).toJson(),
   );
