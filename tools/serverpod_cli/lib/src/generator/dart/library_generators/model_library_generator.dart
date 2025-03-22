@@ -2274,13 +2274,20 @@ class SerializableModelLibraryGenerator {
         ..body = (BlockBuilder()
               ..statements.addAll([
                 const Code('switch(index){'),
-                for (int i = 0; i < enumDefinition.values.length; i++)
+                for (int i = 0; i < enumDefinition.values.length; i++) ...[
                   Code(
                     'case $i: return ${enumDefinition.className}.${enumDefinition.values[i].name};',
                   ),
-                Code(
-                  'default: throw ArgumentError(\'Value "\$index" cannot be converted to "${enumDefinition.className}"\');',
-                ),
+                ],
+                if (enumDefinition.defaultValue == null) ...[
+                  Code(
+                    'default: throw ArgumentError(\'Value "\$index" cannot be converted to "${enumDefinition.className}"\');',
+                  ),
+                ] else ...[
+                  Code(
+                    'default: return ${enumDefinition.className}.${enumDefinition.defaultValue!.name};',
+                  ),
+                ],
                 const Code('}'),
               ]))
             .build()),
@@ -2314,9 +2321,15 @@ class SerializableModelLibraryGenerator {
                   Code(
                     "case '${value.name}': return ${enumDefinition.className}.${value.name};",
                   ),
-                Code(
-                  'default: throw ArgumentError(\'Value "\$name" cannot be converted to "${enumDefinition.className}"\');',
-                ),
+                if (enumDefinition.defaultValue == null) ...[
+                  Code(
+                    'default: throw ArgumentError(\'Value "\$name" cannot be converted to "${enumDefinition.className}"\');',
+                  ),
+                ] else ...[
+                  Code(
+                    'default: return ${enumDefinition.className}.${enumDefinition.defaultValue!.name};',
+                  ),
+                ],
                 const Code('}'),
               ]))
             .build()),
