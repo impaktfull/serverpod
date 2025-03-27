@@ -2274,20 +2274,11 @@ class SerializableModelLibraryGenerator {
         ..body = (BlockBuilder()
               ..statements.addAll([
                 const Code('switch(index){'),
-                for (int i = 0; i < enumDefinition.values.length; i++) ...[
+                for (int i = 0; i < enumDefinition.values.length; i++)
                   Code(
                     'case $i: return ${enumDefinition.className}.${enumDefinition.values[i].name};',
                   ),
-                ],
-                if (enumDefinition.defaultValue == null) ...[
-                  Code(
-                    'default: throw ArgumentError(\'Value "\$index" cannot be converted to "${enumDefinition.className}"\');',
-                  ),
-                ] else ...[
-                  Code(
-                    'default: return ${enumDefinition.className}.${enumDefinition.defaultValue!.name};',
-                  ),
-                ],
+                _buildDefaultSwitchCase(enumDefinition, 'index'),
                 const Code('}'),
               ]))
             .build()),
@@ -2321,15 +2312,7 @@ class SerializableModelLibraryGenerator {
                   Code(
                     "case '${value.name}': return ${enumDefinition.className}.${value.name};",
                   ),
-                if (enumDefinition.defaultValue == null) ...[
-                  Code(
-                    'default: throw ArgumentError(\'Value "\$name" cannot be converted to "${enumDefinition.className}"\');',
-                  ),
-                ] else ...[
-                  Code(
-                    'default: return ${enumDefinition.className}.${enumDefinition.defaultValue!.name};',
-                  ),
-                ],
+                _buildDefaultSwitchCase(enumDefinition, 'name'),
                 const Code('}'),
               ]))
             .build()),
@@ -2373,5 +2356,17 @@ class SerializableModelLibraryGenerator {
     }
 
     return refer(field.name);
+  }
+
+  Code _buildDefaultSwitchCase(
+      EnumDefinition enumDefinition, String valueFieldName) {
+    if (enumDefinition.defaultValue == null) {
+      return Code(
+        'default: throw ArgumentError(\'Value "\$$valueFieldName" cannot be converted to "${enumDefinition.className}"\');',
+      );
+    }
+    return Code(
+      'default: return ${enumDefinition.className}.${enumDefinition.defaultValue!.name};',
+    );
   }
 }
